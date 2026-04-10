@@ -2,9 +2,9 @@ import 'package:budgetloom/features/profile/presentation/screens/profile_screen.
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/app_color.dart';
-import '../../../dashboard/screens/dashboard_screen.dart';
 import '../../../insights/screens/insights_screen.dart';
 import '../../../transcations/screens/transactions_screen.dart';
+import 'dashboard_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

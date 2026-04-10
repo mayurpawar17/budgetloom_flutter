@@ -1,45 +1,88 @@
+import 'package:budgetloom/core/utils/app_color.dart';
+import 'package:budgetloom/core/widgets/common_appbar.dart';
+import 'package:budgetloom/core/widgets/custom_text_field.dart';
+import 'package:budgetloom/features/expense/presentation/bloc/expense_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../bloc/expense_event.dart';
+import '../bloc/expense_state.dart';
 
 class AddExpenseScreen extends StatelessWidget {
-  const AddExpenseScreen({super.key});
+  AddExpenseScreen({super.key});
+
+  final TextEditingController _transactionNameController =
+      TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBFBFE),
-      // appBar: _buildAppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              const Text(
-                "Smart Entry",
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF000066),
+    return BlocListener<ExpenseBloc, ExpenseState>(
+      listener: (context, state) {
+        // If error occurs, show snackbar
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+        }
+        // If success (loading ends and no error), pop the screen
+        if (!state.isLoading &&
+            state.errorMessage == null &&
+            _transactionNameController.text.isEmpty) {
+          // Success logic here (e.g., Navigator.pop(context))
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFBFBFE),
+        appBar: const CommonAppBar(title: "Add Expense"),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                const SizedBox(height: 16),
+                const Text(
+                  "Capture your wealth flow with natural ease.",
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
                 ),
-              ),
-              const Text(
-                "Capture your wealth flow with natural ease.",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 30),
+                const SizedBox(height: 30),
+                CustomTextField(
+                  hint: 'e.g. Swiggy Order 260',
+                  controller: _transactionNameController,
+                ),
+                const SizedBox(height: 20),
+                BlocBuilder<ExpenseBloc, ExpenseState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      onPressed: state.isLoading
+                          ? null
+                          : () {
+                              if (_transactionNameController.text.isNotEmpty) {
+                                context.read<ExpenseBloc>().add(
+                                  CreateExpenseEvent(
+                                    _transactionNameController.text.trim(),
+                                  ),
+                                );
+                                Navigator.pop(context); // Go back to dashboard
+                              }
+                            },
+                      icon: const Icon(Icons.auto_awesome, color: Colors.white),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
 
-              _buildInputBox(),
-              const SizedBox(height: 20),
+                _buildAIAnalysisSection(),
+                const SizedBox(height: 30),
 
-              _buildAIAnalysisSection(),
-              const SizedBox(height: 30),
-
-              _buildPreviewSection(),
-              const SizedBox(height: 30),
-
-              _buildActionButtons(),
-              const SizedBox(height: 20),
-            ],
+                // _buildPreviewSection(),
+                // const SizedBox(height: 30),
+                _buildActionButtons(),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
       ),

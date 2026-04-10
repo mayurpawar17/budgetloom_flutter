@@ -1,28 +1,21 @@
 import 'dart:convert';
 
+import 'package:budgetloom/core/constants/api_constants.dart';
+import 'package:budgetloom/core/utils/app_logger.dart';
 import 'package:budgetloom/features/transcations/data/model/all_expenses_response.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../../core/constants/api_headers.dart';
 
 class ApiRepository {
-  final String baseUrl = "http://192.168.2.160:8080/api/expenses";
-
   Future<AllExpensesResponse> fetchData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('auth_token');
-
-
+    final String apiUrl = ApiConstants.getAllExpense;
     final response = await http.get(
-      Uri.parse(baseUrl),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      Uri.parse(apiUrl),
+      headers: await ApiHeaders.getHeaders(),
     );
-
+    AppLogger.instance.i("Response Body: ${response.body}");
     if (response.statusCode == 200) {
-      print("Response Body: ${response.body}");
       return AllExpensesResponse.fromJson(jsonDecode(response.body));
     } else if (response.statusCode == 401) {
       throw Exception("Unauthorized: Token might be expired.");

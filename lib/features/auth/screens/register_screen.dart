@@ -1,6 +1,8 @@
 import 'package:budgetloom/features/auth/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/custom_text_field.dart';
+
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
 
@@ -46,11 +48,21 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: 30),
 
               // Input Fields
-              const CustomTextField(hint: 'Full Name'), // New Field Added
+              CustomTextField(
+                hint: 'Full Name',
+                controller: TextEditingController(),
+              ), // New Field Added
               const SizedBox(height: 16),
-              const CustomTextField(hint: 'Email Address'),
+              CustomTextField(
+                hint: 'Email Address',
+                controller: TextEditingController(),
+              ),
               const SizedBox(height: 16),
-              const CustomTextField(hint: 'Password', isPassword: true),
+              CustomTextField(
+                hint: 'Password',
+                isPassword: true,
+                controller: TextEditingController(),
+              ),
 
               const SizedBox(height: 30),
 
@@ -98,35 +110,35 @@ class RegisterScreen extends StatelessWidget {
 }
 
 // Reusable Custom TextField
-class CustomTextField extends StatelessWidget {
-  final String hint;
-  final bool isPassword;
-
-  const CustomTextField({
-    super.key,
-    required this.hint,
-    this.isPassword = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      obscureText: isPassword,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.grey[100],
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 18,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
-  }
-}
+// class CustomTextField extends StatelessWidget {
+//   final String hint;
+//   final bool isPassword;
+//
+//   const CustomTextField({
+//     super.key,
+//     required this.hint,
+//     this.isPassword = false,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return TextField(
+//       obscureText: isPassword,
+//       decoration: InputDecoration(
+//         hintText: hint,
+//         filled: true,
+//         fillColor: Colors.grey[100],
+//         contentPadding: const EdgeInsets.symmetric(
+//           horizontal: 20,
+//           vertical: 18,
+//         ),
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: BorderSide.none,
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 // Reusable Social Button

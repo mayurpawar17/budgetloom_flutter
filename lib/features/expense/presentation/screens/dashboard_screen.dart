@@ -3,9 +3,9 @@ import 'package:budgetloom/features/expense/presentation/bloc/expense_state.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/utils/app_formatter.dart';
-import '../../expense/presentation/bloc/expense_event.dart';
-import '../../expense/presentation/screens/add_expense_screen.dart';
+import '../../../../core/utils/app_formatter.dart';
+import '../bloc/expense_event.dart';
+import 'add_expense_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -18,6 +18,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  // Helper to trigger events
+  void _loadData() {
     context.read<ExpenseBloc>().add(GetCurrentMonthTotalEvent());
     context.read<ExpenseBloc>().add(GetCategoryAnalyticsEvent());
   }
@@ -27,57 +32,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              BlocBuilder<ExpenseBloc, ExpenseState>(
-                builder: (context, state) {
-                  if (state.isLoading && state.totalResponse == null) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+        child: RefreshIndicator(
+          onRefresh: () async {
+            _loadData();
+            // Wait for the state to stop loading before hiding the spinner
+            await context.read<ExpenseBloc>().stream.firstWhere(
+              (state) => state.isLoading == false,
+            );
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                BlocBuilder<ExpenseBloc, ExpenseState>(
+                  builder: (context, state) {
+                    if (state.isLoading && state.totalResponse == null) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  // if (state is ExpenseLoading) {
-                  //   return const CircularProgressIndicator();
-                  // }
-                  // if (state is ExpenseLoaded) {
-                  //   return _buildTotalSpendingCard(state);
-                  // }
+                    // if (state is ExpenseLoading) {
+                    //   return const CircularProgressIndicator();
+                    // }
+                    // if (state is ExpenseLoaded) {
+                    //   return _buildTotalSpendingCard(state);
+                    // }
 
-                  return Column(
-                    children: [
-                      // Category Analytics Card
-                      if (state.categoryResponse != null)
-                        _buildSpendingByCategory(state)
-                      else if (state.isLoading)
-                        const CircularProgressIndicator(), // Loading secondary data
+                    return Column(
+                      children: [
+                        // Total Spending Card
+                        if (state.totalResponse != null)
+                          _buildTotalSpendingCard(state),
 
-                      if (state.errorMessage != null &&
-                          state.totalResponse == null)
-                        Text("Error: ${state.errorMessage}"),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 20),
+                        const SizedBox(height: 20),
+                        // Category Analytics Card
+                        if (state.categoryResponse != null)
+                          _buildSpendingByCategory(state)
+                        else if (state.isLoading)
+                          const CircularProgressIndicator(), // Loading secondary data
 
-              // BlocBuilder<ExpenseBloc, ExpenseState>(
-              //   builder: (context, state) {
-              //     if (state is ExpenseLoading) {
-              //       return const CircularProgressIndicator();
-              //     }
-              //     if (state is CategoryAnalyticsLoaded) {
-              //       AppLogger.instance.i("Category State: $state");
-              //       return _buildSpendingByCategory(state);
-              //     }
-              //     return const SizedBox();
-              //   },
-              // ),
-              const SizedBox(height: 20),
-              _buildRecentTransactions(),
-              const SizedBox(height: 20),
-              _buildInsightCard(),
-            ],
+                        if (state.errorMessage != null &&
+                            state.totalResponse == null)
+                          Text("Error: ${state.errorMessage}"),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // BlocBuilder<ExpenseBloc, ExpenseState>(
+                //   builder: (context, state) {
+                //     if (state is ExpenseLoading) {
+                //       return const CircularProgressIndicator();
+                //     }
+                //     if (state is CategoryAnalyticsLoaded) {
+                //       AppLogger.instance.i("Category State: $state");
+                //       return _buildSpendingByCategory(state);
+                //     }
+                //     return const SizedBox();
+                //   },
+                // ),
+                const SizedBox(height: 20),
+                _buildRecentTransactions(),
+                const SizedBox(height: 20),
+                _buildInsightCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -87,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddExpenseScreen()),
+            MaterialPageRoute(builder: (context) => AddExpenseScreen()),
           );
         },
         child: const Icon(Icons.add, color: Colors.white),
@@ -165,13 +184,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         physics: const NeverScrollableScrollPhysics(),
         itemCount: data.length,
         itemBuilder: (context, index) {
+          final category = data[index].category?.toUpperCase() ?? "Unknown";
+          final amount = AppFormatter.formatCurrency(data[index].amount ?? 0.0);
           final item = data[index];
+          return _buildCategoryRow(category, amount, 0.6, Colors.blue);
 
-          return ListTile(
-            leading: const Icon(Icons.pie_chart),
-            title: Text(item.category!.toUpperCase()),
-            trailing: Text("₹${item.amount?.toStringAsFixed(2)}"),
-          );
+          // return ListTile(
+          //   leading: const Icon(Icons.pie_chart),
+          //   title: Text(item.category!.toUpperCase()),
+          //   trailing: Text("₹${item.amount?.toStringAsFixed(2)}"),
+          // );
         },
       ),
       // child: Column(

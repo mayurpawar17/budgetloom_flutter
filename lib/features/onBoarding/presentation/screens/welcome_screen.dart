@@ -1,5 +1,5 @@
-import 'package:budgetloom/core/constants/app_logger.dart';
 import 'package:budgetloom/core/constants/constant.dart';
+import 'package:budgetloom/core/utils/app_logger.dart';
 import 'package:budgetloom/core/widgets/custom_button.dart';
 import 'package:budgetloom/features/auth/screens/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';

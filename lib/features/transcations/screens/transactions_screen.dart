@@ -27,76 +27,35 @@ class TransactionsScreen extends StatelessWidget {
                   children: [
                     _buildSearchBar(),
                     _buildFilterChips(),
-                    _buildDateHeader("TODAY"),
-
+                    // _buildDateHeader("TODAY"),
                     Expanded(
-                      child: ListView.builder(
-                        itemCount: transactions!.length,
-                        itemBuilder: (context, index) {
-                          return _buildTransactionTile(
-                            transactions![index].title!,
-                            transactions[index].createdAt!,
-                            transactions[index].amount!,
-                            Icons.restaurant,
-                            const Color(0xFFECECFF),
-                            Colors.redAccent,
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          // Trigger the load event
+                          context.read<DataBloc>().add(LoadDataRequested());
+
+                          // IMPORTANT: Wait for the next 'Loaded' or 'Error' state
+                          // to make the refresh spinner disappear properly.
+                          await context.read<DataBloc>().stream.firstWhere(
+                            (s) => s is DataLoaded || s is DataError,
                           );
                         },
+                        child: ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: transactions!.length,
+                          itemBuilder: (context, index) {
+                            return _buildTransactionTile(
+                              transactions[index].title!,
+                              transactions[index].createdAt!,
+                              transactions[index].amount!,
+                              Icons.restaurant,
+                              const Color(0xFFECECFF),
+                              Colors.redAccent,
+                            );
+                          },
+                        ),
                       ),
                     ),
-
-                    //
-                    // Expanded(
-                    //   child: ListView(
-                    //     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    //     children: [
-                    //       _buildTransactionTile(
-                    //         "Blue Bottle Coffee",
-                    //         "10:45 AM • Dining",
-                    //         "-\$12.50",
-                    //         Icons.restaurant,
-                    //         const Color(0xFFECECFF),
-                    //         Colors.redAccent,
-                    //       ),
-                    //       _buildTransactionTile(
-                    //         "Apple Store",
-                    //         "09:15 AM • Tech",
-                    //         "-\$1,299.00",
-                    //         Icons.shopping_bag,
-                    //         const Color(0xFFE2FBE5),
-                    //         Colors.redAccent,
-                    //       ),
-                    //
-                    //       _buildDateHeader("YESTERDAY"),
-                    //       _buildTransactionTile(
-                    //         "Metropolitan Transit",
-                    //         "06:20 PM • Travel",
-                    //         "-\$4.50",
-                    //         Icons.directions_bus,
-                    //         const Color(0xFFFFEAEA),
-                    //         Colors.redAccent,
-                    //       ),
-                    //       _buildTransactionTile(
-                    //         "Dividend Payout",
-                    //         "01:00 PM • Investment",
-                    //         "+\$420.00",
-                    //         Icons.account_balance_wallet,
-                    //         const Color(0xFFE2FBE5),
-                    //         Colors.green,
-                    //       ),
-                    //
-                    //       _buildDateHeader("NOV 14, 2023"),
-                    //       _buildTransactionTile(
-                    //         "Monthly Rent",
-                    //         "08:00 AM • Housing",
-                    //         "-\$2,850.00",
-                    //         Icons.home,
-                    //         const Color(0xFFF2F2F2),
-                    //         Colors.redAccent,
-                    //       ),
-                    //     ],
-                    //   ),
-                    // ),
                   ],
                 );
               } else if (state is DataError) {
