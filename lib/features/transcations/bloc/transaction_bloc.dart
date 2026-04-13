@@ -4,19 +4,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/repo/transaction_repo.dart';
 
-class DataBloc extends Bloc<DataEvent, DataState> {
+class TransactionBloc extends Bloc<TransactionEvent, TransactionState> {
   final ApiRepository repository;
 
-  DataBloc(this.repository) : super(DataInitial()) {
+  TransactionBloc(this.repository) : super(TransactionInitial()) {
     on<LoadDataRequested>((event, emit) async {
-      emit(DataLoading());
+      emit(TransactionLoading());
       try {
         final data = await repository.fetchData();
         print("Data Loaded: $data");
-        emit(DataLoaded(data));
+        emit(TransactionLoaded(data));
       } catch (e) {
-
-        emit(DataError(e.toString()));
+        emit(TransactionError(e.toString()));
         print("Error: $e");
       }
     });

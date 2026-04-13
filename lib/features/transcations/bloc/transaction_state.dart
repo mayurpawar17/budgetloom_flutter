@@ -1,28 +1,28 @@
 import 'package:budgetloom/features/transcations/data/model/all_expenses_response.dart';
 import 'package:equatable/equatable.dart';
 
-abstract class DataState extends Equatable {
+abstract class TransactionState extends Equatable {
   @override
   List<Object?> get props => [];
 }
 
-class DataInitial extends DataState {}
+class TransactionInitial extends TransactionState {}
 
-class DataLoading extends DataState {}
+class TransactionLoading extends TransactionState {}
 
-class DataLoaded extends DataState {
+class TransactionLoaded extends TransactionState {
   final AllExpensesResponse allExpensesResponse;
 
-  DataLoaded(this.allExpensesResponse);
+  TransactionLoaded(this.allExpensesResponse);
 
   @override
   List<Object?> get props => [allExpensesResponse]; // BLoC will compare this list
 }
 
-class DataError extends DataState {
+class TransactionError extends TransactionState {
   final String error;
 
-  DataError(this.error);
+  TransactionError(this.error);
 
   @override
   List<Object?> get props => [error];

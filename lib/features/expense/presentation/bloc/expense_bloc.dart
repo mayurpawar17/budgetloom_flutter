@@ -75,8 +75,16 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     on<CreateExpenseEvent>((event, emit) async {
       emit(state.copyWith(isLoading: true));
       try {
-        await expenseRepository.createExpense(event.title);
-        emit(state.copyWith(isLoading: false));
+        final newlyCreatedExpenseResponse = await expenseRepository
+            .createExpense(event.title);
+        // Ensure you emit a NEW state object here
+        emit(
+          state.copyWith(
+            isLoading: false,
+            newlyCreatedExpenseResponse:
+                newlyCreatedExpenseResponse, // Access the 'data' field from response
+          ),
+        );
 
         // Crucial: Refresh data so UI updates after adding
         add(GetCurrentMonthTotalEvent());
@@ -84,6 +92,16 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
       } catch (e) {
         emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
       }
+    });
+    on<ResetExpenseEvent>((event, emit) {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          newlyCreatedExpenseResponse: null,
+          overrideResponse:
+              true, // Tell copyWith to actually use the null value
+        ),
+      );
     });
   }
 }

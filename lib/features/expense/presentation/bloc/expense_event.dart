@@ -21,5 +21,7 @@ class CreateExpenseEvent extends ExpenseEvent {
   List<Object?> get props => [title];
 }
 
+class ResetExpenseEvent extends ExpenseEvent {}
+
 /// Optional: Triggered to refresh data (useful for pull-to-refresh)
 class RefreshExpensesEvent extends ExpenseEvent {}

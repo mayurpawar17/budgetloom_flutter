@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:budgetloom/core/utils/app_logger.dart';
 import 'package:budgetloom/features/expense/data/model/category_expense_response.dart';
 import 'package:budgetloom/features/expense/data/model/current_month_total_response.dart';
+import 'package:budgetloom/features/transcations/data/model/newly_created_expense_response.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/constants/api_constants.dart';
@@ -49,7 +50,7 @@ class ExpenseRepository {
     }
   }
 
-  Future<CategoryExpenseResponse> createExpense(String title) async {
+  Future<NewlyCreatedExpenseResponse> createExpense(String title) async {
     final apiUrl = ApiConstants.createExpense;
     AppLogger.instance.i("Create Expense API URL: $apiUrl");
 
@@ -61,7 +62,7 @@ class ExpenseRepository {
       );
 
       AppLogger.instance.i("Create Expense Response: ${response.body}");
-      return CategoryExpenseResponse.fromJson(jsonDecode(response.body));
+      return NewlyCreatedExpenseResponse.fromJson(jsonDecode(response.body));
     } catch (e) {
       throw Exception("Failed to create expense: $e");
     }

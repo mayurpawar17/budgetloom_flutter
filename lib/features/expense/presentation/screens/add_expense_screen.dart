@@ -1,18 +1,35 @@
 import 'package:budgetloom/core/utils/app_color.dart';
+import 'package:budgetloom/core/utils/app_logger.dart';
 import 'package:budgetloom/core/widgets/common_appbar.dart';
 import 'package:budgetloom/core/widgets/custom_text_field.dart';
 import 'package:budgetloom/features/expense/presentation/bloc/expense_bloc.dart';
+import 'package:budgetloom/features/transcations/data/model/newly_created_expense_response.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/app_date_utils.dart';
 import '../bloc/expense_event.dart';
 import '../bloc/expense_state.dart';
 
-class AddExpenseScreen extends StatelessWidget {
-  AddExpenseScreen({super.key});
+class AddExpenseScreen extends StatefulWidget {
+  const AddExpenseScreen({super.key});
 
+  @override
+  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
+}
+
+class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController _transactionNameController =
       TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear any old AI analysis data immediately when opening the screen
+    Future.microtask(
+      () => context.read<ExpenseBloc>().add(ResetExpenseEvent()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +37,7 @@ class AddExpenseScreen extends StatelessWidget {
       listener: (context, state) {
         // If error occurs, show snackbar
         if (state.errorMessage != null) {
+          AppLogger.instance.i(state.errorMessage!);
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
@@ -52,6 +70,11 @@ class AddExpenseScreen extends StatelessWidget {
                 const SizedBox(height: 20),
                 BlocBuilder<ExpenseBloc, ExpenseState>(
                   builder: (context, state) {
+                    // Only show the button if we AREN'T loading and DON'T have a response yet
+                    if (state.newlyCreatedExpenseResponse != null) {
+                      return const SizedBox.shrink();
+                    }
+
                     return IconButton(
                       style: IconButton.styleFrom(
                         backgroundColor: AppColors.primary,
@@ -65,7 +88,10 @@ class AddExpenseScreen extends StatelessWidget {
                                     _transactionNameController.text.trim(),
                                   ),
                                 );
-                                Navigator.pop(context); // Go back to dashboard
+                                //clean textField
+                                _transactionNameController.clear();
+
+                                // Navigator.pop(context); // Go back to dashboard
                               }
                             },
                       icon: const Icon(Icons.auto_awesome, color: Colors.white),
@@ -74,12 +100,38 @@ class AddExpenseScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                _buildAIAnalysisSection(),
+                BlocBuilder<ExpenseBloc, ExpenseState>(
+                  builder: (context, state) {
+                    if (state.isLoading) {
+                      return const Center(
+                        child: Text("AI is analyzing your expense..."),
+                      );
+                    }
+                    if (state.newlyCreatedExpenseResponse != null) {
+                      // Pass the real data to the UI
+                      return Column(
+                        children: [
+                          _buildAIAnalysisSection(
+                            state.newlyCreatedExpenseResponse!,
+                          ),
+                          _buildActionButtons(
+                            state.newlyCreatedExpenseResponse,
+                            context.read<ExpenseBloc>(),
+                            context,
+                          ),
+                        ],
+                      );
+                    }
+                    // return _buildAIAnalysisSection();
+
+                    return const SizedBox.shrink(); // Show nothing if no data yet
+                  },
+                ),
                 const SizedBox(height: 30),
 
                 // _buildPreviewSection(),
                 // const SizedBox(height: 30),
-                _buildActionButtons(),
+                // _buildActionButtons(),
                 const SizedBox(height: 20),
               ],
             ),
@@ -142,7 +194,10 @@ class AddExpenseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAIAnalysisSection() {
+  Widget _buildAIAnalysisSection(
+    NewlyCreatedExpenseResponse newlyCreatedExpenseResponse,
+  ) {
+    final data = newlyCreatedExpenseResponse.data;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -182,11 +237,26 @@ class AddExpenseScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 15),
-          _buildInfoTile("CATEGORY", Icons.restaurant, "Food"),
+          _buildInfoTile("TITLE", Icons.info, data?.title ?? "N/A"),
           const SizedBox(height: 10),
-          _buildInfoTile("AMOUNT", Icons.currency_rupee, "350"),
+          _buildInfoTile(
+            "CATEGORY",
+            Icons.restaurant,
+            data?.category?.toUpperCase() ?? "OTHER",
+          ),
           const SizedBox(height: 10),
-          _buildInfoTile("DATE", Icons.calendar_today, "Today"),
+          _buildInfoTile(
+            "AMOUNT",
+            Icons.currency_rupee,
+            data?.amount.toString() ?? "0",
+          ),
+          const SizedBox(height: 10),
+          // Using your reusable DateUtil here!
+          _buildInfoTile(
+            "DATE",
+            Icons.calendar_today,
+            AppDateUtil.formatString(data?.createdAt ?? ""),
+          ),
         ],
       ),
     );
@@ -317,12 +387,21 @@ class AddExpenseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(
+    NewlyCreatedExpenseResponse? newlyCreatedExpenseResponse,
+    ExpenseBloc bloc,
+    context,
+  ) {
+    // If there is no response yet, you might want to hide these buttons
+    if (newlyCreatedExpenseResponse == null) return const SizedBox.shrink();
     return Row(
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              newlyCreatedExpenseResponse = null;
+              Navigator.pop(context);
+            },
             icon: const Icon(Icons.tune),
             label: const Text("Refine Entry"),
             style: OutlinedButton.styleFrom(
@@ -336,7 +415,12 @@ class AddExpenseScreen extends StatelessWidget {
         const SizedBox(width: 15),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () {
+              bloc.add(ResetExpenseEvent()); // No .read() needed here!
+
+              // 2. Simply go back or to Dashboard
+              Navigator.pop(context);
+            },
             icon: const Icon(Icons.check_circle),
             label: const Text("Confirm Expense"),
             style: ElevatedButton.styleFrom(

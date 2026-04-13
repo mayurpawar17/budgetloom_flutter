@@ -1,5 +1,6 @@
 import 'package:budgetloom/features/expense/data/model/category_expense_response.dart';
 import 'package:budgetloom/features/expense/data/model/current_month_total_response.dart';
+import 'package:budgetloom/features/transcations/data/model/newly_created_expense_response.dart';
 import 'package:equatable/equatable.dart';
 
 // abstract class ExpenseState extends Equatable {
@@ -36,12 +37,14 @@ class ExpenseState extends Equatable {
   final bool isLoading;
   final CurrentMonthTotalResponse? totalResponse;
   final CategoryExpenseResponse? categoryResponse;
+  final NewlyCreatedExpenseResponse? newlyCreatedExpenseResponse;
   final String? errorMessage;
 
   const ExpenseState({
     this.isLoading = false,
     this.totalResponse,
     this.categoryResponse,
+    this.newlyCreatedExpenseResponse,
     this.errorMessage,
   });
 
@@ -49,12 +52,18 @@ class ExpenseState extends Equatable {
     bool? isLoading,
     CurrentMonthTotalResponse? totalResponse,
     CategoryExpenseResponse? categoryResponse,
+    NewlyCreatedExpenseResponse? newlyCreatedExpenseResponse,
     String? errorMessage,
+    bool overrideResponse = false,
   }) {
     return ExpenseState(
       isLoading: isLoading ?? this.isLoading,
       totalResponse: totalResponse ?? this.totalResponse,
       categoryResponse: categoryResponse ?? this.categoryResponse,
+      // If overrideResponse is true, we take the new value even if it's null
+      newlyCreatedExpenseResponse: overrideResponse
+          ? newlyCreatedExpenseResponse
+          : (newlyCreatedExpenseResponse ?? this.newlyCreatedExpenseResponse),
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
@@ -64,6 +73,7 @@ class ExpenseState extends Equatable {
     isLoading,
     totalResponse,
     categoryResponse,
+    newlyCreatedExpenseResponse,
     errorMessage,
   ];
 }

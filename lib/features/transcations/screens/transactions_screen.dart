@@ -1,3 +1,4 @@
+import 'package:budgetloom/core/utils/app_date_utils.dart';
 import 'package:budgetloom/features/transcations/bloc/transaction_bloc.dart';
 import 'package:budgetloom/features/transcations/data/repo/transaction_repo.dart';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/transaction_event.dart';
 import '../bloc/transaction_state.dart';
+import '../data/model/category_data.dart';
 
 class TransactionsScreen extends StatelessWidget {
   const TransactionsScreen({super.key});
@@ -12,15 +14,16 @@ class TransactionsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => DataBloc(ApiRepository())..add(LoadDataRequested()),
+      create: (context) =>
+          TransactionBloc(ApiRepository())..add(LoadDataRequested()),
       child: Scaffold(
         backgroundColor: const Color(0xFFFBFBFE),
         body: SafeArea(
-          child: BlocBuilder<DataBloc, DataState>(
+          child: BlocBuilder<TransactionBloc, TransactionState>(
             builder: (context, state) {
-              if (state is DataLoading) {
+              if (state is TransactionLoading) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (state is DataLoaded) {
+              } else if (state is TransactionLoaded) {
                 final transactions = state.allExpensesResponse.data;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,24 +35,52 @@ class TransactionsScreen extends StatelessWidget {
                       child: RefreshIndicator(
                         onRefresh: () async {
                           // Trigger the load event
-                          context.read<DataBloc>().add(LoadDataRequested());
+                          context.read<TransactionBloc>().add(
+                            LoadDataRequested(),
+                          );
 
                           // IMPORTANT: Wait for the next 'Loaded' or 'Error' state
                           // to make the refresh spinner disappear properly.
-                          await context.read<DataBloc>().stream.firstWhere(
-                            (s) => s is DataLoaded || s is DataError,
-                          );
+                          await context
+                              .read<TransactionBloc>()
+                              .stream
+                              .firstWhere(
+                                (s) =>
+                                    s is TransactionLoaded ||
+                                    s is TransactionError,
+                              );
                         },
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           itemCount: transactions!.length,
                           itemBuilder: (context, index) {
+                            // Sort the list so the newest dates are at the beginning
+                            transactions.sort((a, b) {
+                              DateTime dateA = DateTime.parse(a.createdAt!);
+                              DateTime dateB = DateTime.parse(b.createdAt!);
+                              return dateB.compareTo(
+                                dateA,
+                              ); // B before A creates descending order (latest first)
+                            });
+                            final item = transactions[index];
+                            final categoryDetail = CategoryMapper.getDetail(
+                              item.category,
+                            );
                             return _buildTransactionTile(
-                              transactions[index].title!,
-                              transactions[index].createdAt!,
-                              transactions[index].amount!,
-                              Icons.restaurant,
-                              const Color(0xFFECECFF),
+                              // transactions[index].title!,
+                              // // transactions[index].createdAt!,
+                              // AppDateUtil.formatString(
+                              //   transactions[index].createdAt!,
+                              // ),
+                              // transactions[index].amount!,
+                              // Icons.restaurant,
+                              // const Color(0xFFECECFF),
+                              // Colors.redAccent,
+                              item.title ?? "No Title",
+                              AppDateUtil.formatString(item.createdAt ?? ""),
+                              item.amount ?? "0.00",
+                              categoryDetail.icon, // mapped icon
+                              categoryDetail.color, // mapped color
                               Colors.redAccent,
                             );
                           },
@@ -58,7 +89,7 @@ class TransactionsScreen extends StatelessWidget {
                     ),
                   ],
                 );
-              } else if (state is DataError) {
+              } else if (state is TransactionError) {
                 return Center(
                   child: Text(
                     state.error,
@@ -176,6 +207,7 @@ class TransactionsScreen extends StatelessWidget {
     Color iconBg,
     Color amountColor,
   ) {
+    // print("Title : $title Subtitle : $subtitle Amount : $amount ");
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(15),
